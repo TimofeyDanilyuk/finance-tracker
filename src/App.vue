@@ -125,14 +125,14 @@ const isAnyModalOpen = computed(() => store.isAnyModalOpen)
   flex: 1;
   overflow: hidden; /* Контент скроллится строго внутри страниц */
   position: relative;
-  padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(30px + env(safe-area-inset-bottom, 0px));
 }
 
 .app-tabbar {
   display: flex;
   justify-content: space-around;
   align-items: center;
-  height: calc(60px + env(safe-area-inset-bottom, 0px));
+  height: 50px;
   /* Учитываем нижний Safe Area для индикатора Home на iPhone */
   padding-bottom: env(safe-area-inset-bottom, 0px);
   background-color: var(--bg-black);

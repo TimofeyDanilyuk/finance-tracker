@@ -630,17 +630,20 @@ const submitAddCategory = () => {
 .wallet-name { font-size: 15px; color: #ffffff; }
 .wallet-balance { font-size: 15px; font-weight: 600; color: #ffffff; }
 
-/* Модалки (iOS Bottom Sheet) */
+/* Модалки (Fullscreen) */
 .modal-overlay {
-  position: absolute;
+  position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   display: flex;
-  align-items: flex-end;
+  align-items: center;
+  justify-content: center;
   z-index: 2000;
   animation: fadeIn 0.3s ease;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 @keyframes fadeIn {
@@ -651,12 +654,37 @@ const submitAddCategory = () => {
 .modal-content {
   background-color: #1c1c1e;
   width: 100%;
-  border-radius: 20px 20px 0 0;
-  padding: 20px;
+  max-width: 500px;
+  border-radius: 20px;
+  padding: 24px;
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
   box-sizing: border-box;
-  animation: slideUp 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-  transform-origin: bottom;
+  max-height: 90vh;
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  display: flex;
+  flex-direction: column;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-content::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Убедимся, что форма внутри может скроллиться */
+.modal-content .transaction-form {
+  flex: 1;
+  min-height: 0;
+}
+
+/* На мобильных устройствах модалка почти на всю ширину */
+@media (max-width: 600px) {
+  .modal-content {
+    max-width: 100%;
+    border-radius: 20px 20px 0 0;
+    max-height: 95vh;
+  }
 }
 
 @keyframes slideUp {
@@ -665,9 +693,22 @@ const submitAddCategory = () => {
 }
 
 .max-height-modal {
-  max-height: 85vh;
+  max-height: 95vh;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.max-height-modal::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Убедимся, что внутренний контент может растягиваться */
+.max-height-modal .category-history-block {
+  flex: 1;
+  min-height: 0; /* Важно для скролла внутри flex-контейнера */
 }
 
 .modal-header {
