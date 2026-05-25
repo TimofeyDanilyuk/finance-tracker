@@ -1,0 +1,1 @@
+{"root":["./src/main.ts","./src/vite-env.d.ts","./src/domain/types.ts","./src/store/financestore.ts","./src/app.vue","./src/components/appicon.vue","./src/components/helloworld.vue","./src/views/analyticsview.vue","./src/views/dashboardview.vue","./src/views/settingsview.vue","./src/views/transactionsview.vue"],"version":"6.0.3"}
