@@ -3,10 +3,9 @@ import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 
-export default defineConfig(({ command }) => {
+export default defineConfig({
   return {
-    // Теперь всё обёрнуто в блок return, синтаксис строгий и чистый
-    base: command === 'serve' ? '/' : '/finance-tracker/', 
+    base: '/finance-tracker/', 
     plugins: [
       vue(),
       VitePWA({
