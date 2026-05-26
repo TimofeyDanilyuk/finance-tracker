@@ -1,64 +1,72 @@
 <template>
-  <div class="settings-view scrollable-content">
-    
+  <div class="settings scrollable-content">
+
     <section class="settings-section">
-      <h2 class="section-title">Резервное копирование</h2>
-      <p class="section-desc">Ваши данные хранятся только на этом устройстве. Регулярно делайте экспорт.</p>
-      
-      <div class="actions-grid">
-        <button class="action-btn export-btn" @click="handleExport">
-          <AppIcon name="history" :size="20" /> Экспорт JSON
+      <p class="section-label">Данные</p>
+      <div class="settings-group">
+        <button class="settings-row" @click="handleExport">
+          <div class="settings-row-left">
+            <div class="settings-ico ico-blue">
+              <AppIcon name="history" :size="18" />
+            </div>
+            <span>Экспорт JSON</span>
+          </div>
+          <span class="settings-chevron">›</span>
         </button>
-        
-        <button class="action-btn import-btn" @click="triggerFileInput">
-          <AppIcon name="arrow-down" :size="20" />
-          Импорт JSON
+        <div class="settings-divider"></div>
+        <button class="settings-row" @click="triggerFileInput">
+          <div class="settings-row-left">
+            <div class="settings-ico ico-green">
+              <AppIcon name="arrow-down" :size="18" />
+            </div>
+            <span>Импорт JSON</span>
+          </div>
+          <span class="settings-chevron">›</span>
         </button>
-        
-        <input 
-          type="file" 
-          ref="fileInputRef" 
-          accept=".json" 
-          style="display: none" 
-          @change="handleImport" 
-        />
+        <input type="file" ref="fileInputRef" accept=".json" style="display:none" @change="handleImport" />
       </div>
+      <p class="section-hint">Данные хранятся только на устройстве. Делайте экспорт регулярно.</p>
     </section>
 
     <section class="settings-section">
-      <div class="section-header">
-        <h2 class="section-title">Кошельки</h2>
-        <button class="icon-add-btn" @click="addNewWallet">
-          <span>+ Добавить</span>
-        </button>
+      <div class="section-header-row">
+        <p class="section-label">Кошельки</p>
+        <button class="add-link" @click="addNewWallet">+ Добавить</button>
       </div>
-
-      <div class="list-container">
-        <div 
-          v-for="wallet in store.wallets" 
-          :key="wallet.id" 
-          class="list-item"
+      <div class="settings-group">
+        <div
+          v-for="(wallet, i) in store.wallets"
+          :key="wallet.id"
         >
-          <div class="item-info">
-            <AppIcon name="wallet" :size="24" class="item-icon" />
-            <span :class="{ 'archived-text': wallet.isArchived }">{{ wallet.name }}</span>
+          <div class="settings-row">
+            <div class="settings-row-left">
+              <div class="settings-ico ico-blue">
+                <AppIcon name="wallet" :size="18" />
+              </div>
+              <span :class="{ archived: wallet.isArchived }">{{ wallet.name }}</span>
+            </div>
+            <button class="archive-btn" :class="{ restore: wallet.isArchived }" @click="toggleArchive(wallet.id)">
+              {{ wallet.isArchived ? 'Вернуть' : 'Архив' }}
+            </button>
           </div>
-          <button 
-            class="toggle-btn" 
-            @click="toggleArchive(wallet.id)"
-          >
-            {{ wallet.isArchived ? 'Вернуть' : 'В архив' }}
-          </button>
+          <div v-if="i < store.wallets.length - 1" class="settings-divider"></div>
         </div>
       </div>
     </section>
 
     <section class="settings-section">
-      <h2 class="section-title">Категории</h2>
-      <p class="section-desc">
-        Всего категорий доходов: {{ store.categories.filter(c => c.type === 'income').length }}<br>
-        Всего категорий расходов: {{ store.categories.filter(c => c.type === 'expense').length }}
-      </p>
+      <p class="section-label">Категории</p>
+      <div class="settings-group stats-row">
+        <div class="stat-item">
+          <span class="stat-num">{{ store.categories.filter(c => c.type === 'income').length }}</span>
+          <span class="stat-lbl">доходов</span>
+        </div>
+        <div class="stat-sep"></div>
+        <div class="stat-item">
+          <span class="stat-num">{{ store.categories.filter(c => c.type === 'expense').length }}</span>
+          <span class="stat-lbl">расходов</span>
+        </div>
+      </div>
     </section>
 
   </div>
@@ -72,186 +80,155 @@ import AppIcon from '@/components/AppIcon.vue'
 const store = useFinanceStore()
 const fileInputRef = ref<HTMLInputElement | null>(null)
 
-// --- Логика Экспорта/Импорта ---
-const handleExport = () => {
-  store.exportData()
-}
-
-const triggerFileInput = () => {
-  if (fileInputRef.value) {
-    fileInputRef.value.click()
-  }
-}
-
-const handleImport = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  const file = target.files?.[0]
+const handleExport = () => store.exportData()
+const triggerFileInput = () => fileInputRef.value?.click()
+const handleImport = (e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0]
   if (!file) return
-
   const reader = new FileReader()
-  reader.onload = (e) => {
-    const content = e.target?.result
+  reader.onload = ev => {
+    const content = ev.target?.result
     if (typeof content === 'string') {
       const result = store.importData(content)
-      if (result.success) {
-        alert('Данные успешно импортированы!')
-      } else {
-        alert(`Ошибка импорта: ${result.error}`)
-      }
+      alert(result.success ? 'Данные импортированы!' : `Ошибка: ${result.error}`)
     }
-    // Сбрасываем инпут, чтобы можно было выбрать тот же файл еще раз
     if (fileInputRef.value) fileInputRef.value.value = ''
   }
   reader.readAsText(file)
 }
 
-// --- Логика управления кошельками ---
 const addNewWallet = () => {
-  const name = prompt('Введите название нового кошелька:')
-  if (name && name.trim()) {
-    store.addWallet(name.trim())
-  }
+  const name = prompt('Название кошелька:')
+  if (name?.trim()) store.addWallet(name.trim())
 }
 
 const toggleArchive = (id: string) => {
-  const wallet = store.wallets.find(w => w.id === id)
-  if (wallet) {
-    store.editWallet(id, wallet.name, !wallet.isArchived)
-  }
+  const w = store.wallets.find(w => w.id === id)
+  if (w) store.editWallet(id, w.name, !w.isArchived)
 }
 </script>
 
 <style scoped>
-.settings-view {
-  padding: 20px;
-  padding-bottom: 40px; /* Отступ от таббара */
-}
+.settings { padding: 16px 16px calc(var(--tab-h) + 24px); }
 
-.settings-section {
-  margin-bottom: 32px;
-}
+.settings-section { margin-bottom: 28px; }
 
-.section-header {
+.section-header-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
-}
-
-.section-title {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text-primary);
   margin-bottom: 8px;
 }
 
-.section-desc {
+.section-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin-bottom: 8px;
+  padding-left: 4px;
+}
+
+.section-hint {
+  font-size: 12px;
+  color: var(--text-3);
+  margin-top: 8px;
+  padding-left: 4px;
+  line-height: 1.5;
+}
+
+.add-link {
+  background: transparent;
+  color: var(--blue);
   font-size: 14px;
-  color: var(--text-secondary);
-  margin-bottom: 16px;
+  font-weight: 700;
+  padding: 0;
 }
 
-/* Кнопки импорта/экспорта */
-.actions-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: 14px;
-  border-radius: 18px;
-  padding: 16px 12px;
-  background: var(--bg-glass);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid var(--glass-border);
-  color: var(--text-primary);
-  transition: all 0.3s ease;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.action-btn:hover {
-  transform: translateY(-4px);
-  border-color: var(--accent-blue);
-  box-shadow: 0 8px 24px rgba(93, 138, 255, 0.2);
-}
-
-.export-btn {
-  color: var(--accent-blue);
-  border-color: rgba(93, 138, 255, 0.3);
-}
-
-.export-btn:hover {
-  border-color: var(--accent-blue);
-  box-shadow: 0 8px 24px rgba(93, 138, 255, 0.2);
-}
-
-.import-btn {
-  color: var(--accent-green);
-  border-color: rgba(48, 209, 88, 0.3);
-}
-
-.import-btn:hover {
-  border-color: var(--accent-green);
-  box-shadow: 0 8px 24px rgba(48, 209, 88, 0.2);
-}
-
-/* Списки (кошельки) */
-.list-container {
-  background-color: var(--bg-elevated);
-  border-radius: 12px;
+.settings-group {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 
-.list-item {
+.settings-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 16px;
-  border-bottom: 1px solid var(--border-color);
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: transparent;
+  color: var(--text-1);
+  font-size: 15px;
+  font-weight: 500;
+  width: 100%;
+  text-align: left;
 }
 
-.list-item:last-child {
-  border-bottom: none;
-}
-
-.item-info {
+.settings-row-left {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 16px;
-  font-weight: 500;
 }
 
-.item-icon {
-  color: var(--accent-blue);
+.settings-ico {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.ico-blue  { background: var(--blue-dim);  color: var(--blue); }
+.ico-green { background: var(--green-dim); color: var(--green); }
+
+.settings-chevron {
+  font-size: 20px;
+  color: var(--text-3);
+  font-weight: 400;
+  line-height: 1;
 }
 
-.archived-text {
+.settings-divider {
+  height: 0.5px;
+  background: var(--border);
+  margin-left: 62px;
+}
+
+.archived {
   text-decoration: line-through;
-  color: var(--text-secondary);
+  color: var(--text-3);
 }
 
-.icon-add-btn {
-  background: transparent;
-  color: var(--accent-blue);
-  width: auto;
-  padding: 4px 8px;
-  font-size: 16px;
-  font-weight: 600;
+.archive-btn {
+  background: var(--red-dim);
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 8px;
+}
+.archive-btn.restore {
+  background: var(--green-dim);
+  color: var(--green);
 }
 
-.toggle-btn {
-  background: transparent;
-  color: var(--accent-red);
-  font-size: 14px;
-  width: auto;
-  padding: 4px 8px;
+/* Stats */
+.stats-row {
+  display: flex;
+  align-items: center;
+  padding: 18px 20px;
 }
+.stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.stat-num { font-size: 28px; font-weight: 800; color: var(--text-1); letter-spacing: -1px; }
+.stat-lbl { font-size: 12px; font-weight: 600; color: var(--text-3); }
+.stat-sep { width: 1px; height: 40px; background: var(--border); }
 </style>

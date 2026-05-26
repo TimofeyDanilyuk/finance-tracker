@@ -1,96 +1,115 @@
 <template>
-  <div class="dashboard-view scrollable-content">
-    
-    <header class="balance-card">
+  <div class="dashboard scrollable-content">
+
+    <!-- Balance Card -->
+    <div class="balance-card">
       <p class="balance-label">Общий баланс</p>
       <h1 class="balance-amount">{{ formatCurrency(store.totalBalance) }}</h1>
-    </header>
+      <div class="balance-stats">
+        <div class="bal-stat">
+          <span class="bal-stat-label">↑ Доходы</span>
+          <span class="bal-stat-value income">{{ formatCurrency(totalIncome) }}</span>
+        </div>
+        <div class="bal-divider"></div>
+        <div class="bal-stat">
+          <span class="bal-stat-label">↓ Расходы</span>
+          <span class="bal-stat-value expense">{{ formatCurrency(totalExpense) }}</span>
+        </div>
+      </div>
+    </div>
 
-    <div class="action-buttons">
-      <button class="btn-expense" @click="openModal('expense')">
-        <AppIcon name="arrow-down" :size="20" /> 
+    <!-- Quick Actions -->
+    <div class="actions">
+      <button class="act-btn act-expense" @click="openModal('expense')">
+        <div class="act-ico">
+          <AppIcon name="arrow-down" :size="18" />
+        </div>
         <span>Расход</span>
       </button>
-      <button class="btn-income" @click="openModal('income')">
-        <AppIcon name="salary" :size="20" /> 
+      <button class="act-btn act-income" @click="openModal('income')">
+        <div class="act-ico">
+          <AppIcon name="salary" :size="18" />
+        </div>
         <span>Доход</span>
       </button>
-      <button class="btn-transfer" @click="openModal('transfer')">
-        <AppIcon name="transfer" :size="20" /> 
+      <button class="act-btn act-transfer" @click="openModal('transfer')">
+        <div class="act-ico">
+          <AppIcon name="transfer" :size="18" />
+        </div>
         <span>Перевод</span>
       </button>
     </div>
 
-    <section class="categories-section">
-      <h2 class="section-title">Категории расходов</h2>
-      <div class="categories-grid">
+    <!-- Categories -->
+    <section class="section">
+      <h2 class="section-title">Категории</h2>
+      <div class="cats-grid">
         <div
           v-for="cat in expenseCategories"
           :key="cat.id"
-          class="category-grid-item"
+          class="cat-item"
           @click="openCategoryDetail(cat)"
         >
-          <div class="category-icon-wrapper">
-            <AppIcon :name="cat.iconName" :size="24" />
+          <div class="cat-ico-wrap">
+            <AppIcon :name="cat.iconName" :size="22" />
           </div>
-          <span class="category-grid-name">{{ cat.name }}</span>
-          <div class="category-limit-details" v-if="cat.monthlyLimit !== null">
-            <div class="limit-numbers">
-              <span class="limit-spent">{{ formatCurrency(getCategorySpentThisMonth(cat.id)) }}</span>
-              <span class="limit-separator">/</span>
-              <span class="limit-total">{{ formatCurrency(cat.monthlyLimit) }}</span>
+          <span class="cat-name">{{ cat.name }}</span>
+          <template v-if="cat.monthlyLimit !== null">
+            <div class="cat-progress">
+              <div
+                class="cat-progress-fill"
+                :class="{ over: getCategorySpentThisMonth(cat.id) > cat.monthlyLimit }"
+                :style="{ width: Math.min(getCategorySpentThisMonth(cat.id) / cat.monthlyLimit * 100, 100) + '%' }"
+              ></div>
             </div>
-            <div class="limit-bar" :class="{ exceeded: getCategorySpentThisMonth(cat.id) > cat.monthlyLimit }">
-              <div class="limit-bar-fill" :style="{ width: Math.min(getCategorySpentThisMonth(cat.id) / cat.monthlyLimit * 100, 100) + '%' }"></div>
-            </div>
-          </div>
-          <div class="category-limit-details" v-else>
-            <div class="limit-numbers">
-              <span class="limit-spent">{{ formatCurrency(getCategorySpentThisMonth(cat.id)) }}</span>
-              <span class="limit-no-limit">без лимита</span>
-            </div>
-            <div class="limit-bar">
-              <div class="limit-bar-fill" :style="{ width: '0%' }"></div>
-            </div>
-          </div>
+            <span class="cat-spent">{{ formatShort(getCategorySpentThisMonth(cat.id)) }}</span>
+          </template>
+          <template v-else>
+            <div class="cat-progress"><div class="cat-progress-fill" style="width:0%"></div></div>
+            <span class="cat-spent">{{ formatShort(getCategorySpentThisMonth(cat.id)) }}</span>
+          </template>
         </div>
-        <!-- Кнопка добавления категории -->
-        <div
-          class="category-grid-item add-category"
-          @click="openAddCategoryModal"
-        >
-          <div class="category-icon-wrapper add-category-icon">
-            <AppIcon name="plus" :size="24" />
+
+        <div class="cat-item cat-add" @click="openAddCategoryModal">
+          <div class="cat-ico-wrap cat-ico-dashed">
+            <AppIcon name="plus" :size="20" />
           </div>
-          <span class="category-grid-name">Добавить</span>
+          <span class="cat-name" style="color:var(--text-3)">Добавить</span>
+          <div class="cat-progress" style="opacity:0"></div>
+          <span class="cat-spent" style="opacity:0">—</span>
         </div>
       </div>
     </section>
 
-    <section class="wallets-section">
-      <h2 class="section-title">Мои кошельки</h2>
+    <!-- Wallets -->
+    <section class="section">
+      <h2 class="section-title">Кошельки</h2>
       <div class="wallets-list">
-        <div 
-          v-for="wallet in activeWallets" 
-          :key="wallet.id" 
-          class="wallet-item"
+        <div
+          v-for="wallet in activeWallets"
+          :key="wallet.id"
+          class="wallet-row"
         >
-          <div class="wallet-info">
-            <AppIcon name="wallet" :size="22" class="wallet-icon" />
-            <span class="wallet-name">{{ wallet.name }}</span>
+          <div class="wallet-left">
+            <div class="wallet-ico">
+              <AppIcon name="wallet" :size="18" />
+            </div>
+            <div>
+              <p class="wallet-name">{{ wallet.name }}</p>
+            </div>
           </div>
-          <span class="wallet-balance">{{ formatCurrency(store.walletBalances[wallet.id] || 0) }}</span>
+          <span class="wallet-bal">{{ formatCurrency(store.walletBalances[wallet.id] || 0) }}</span>
         </div>
       </div>
     </section>
 
+    <!-- ── Add Transaction Modal ── -->
     <div v-if="isModalOpen" class="modal-overlay" @click.self="closeModal">
       <div class="modal-content">
         <div class="modal-header">
           <h3>{{ modalTitle }}</h3>
           <button class="close-btn" @click="closeModal">✕</button>
         </div>
-
         <form @submit.prevent="submitTransaction" class="transaction-form">
           <div class="form-group">
             <label>Сумма (₽)</label>
@@ -101,16 +120,16 @@
             <input type="date" v-model="form.date" required />
           </div>
           <div v-if="modalType === 'expense' || modalType === 'transfer'" class="form-group">
-            <label>{{ modalType === 'transfer' ? 'Откуда перевести' : 'Кошелек' }}</label>
+            <label>{{ modalType === 'transfer' ? 'Откуда' : 'Кошелёк' }}</label>
             <select v-model="form.fromWalletId" required>
-              <option disabled value="">Выберите кошелек</option>
+              <option disabled value="">Выберите кошелёк</option>
               <option v-for="w in activeWallets" :key="w.id" :value="w.id">{{ w.name }}</option>
             </select>
           </div>
           <div v-if="modalType === 'income' || modalType === 'transfer'" class="form-group">
-            <label>{{ modalType === 'transfer' ? 'Куда перевести' : 'Кошелек' }}</label>
+            <label>{{ modalType === 'transfer' ? 'Куда' : 'Кошелёк' }}</label>
             <select v-model="form.toWalletId" required>
-              <option disabled value="">Выберите кошелек</option>
+              <option disabled value="">Выберите кошелёк</option>
               <option v-for="w in activeWallets" :key="w.id" :value="w.id">{{ w.name }}</option>
             </select>
           </div>
@@ -130,63 +149,59 @@
       </div>
     </div>
 
+    <!-- ── Category Detail Modal ── -->
     <div v-if="isCategoryModalOpen && selectedCategory" class="modal-overlay" @click.self="closeCategoryModal">
       <div class="modal-content max-height-modal">
         <div class="modal-header">
-          <div class="modal-title-with-icon">
-            <div class="category-icon-wrapper small-circle">
-              <AppIcon :name="selectedCategory.iconName" :size="18" />
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="cat-ico-wrap small-ico">
+              <AppIcon :name="selectedCategory.iconName" :size="16" />
             </div>
             <h3>{{ selectedCategory.name }}</h3>
           </div>
           <button class="close-btn" @click="closeCategoryModal">✕</button>
         </div>
 
-        <form @submit.prevent="submitCategoryExpense" class="category-quick-form">
-          <h4 class="sub-block-title">Записать расход</h4>
-          <div class="form-row-grid">
-            <input type="number" v-model="catForm.amount" required min="0.01" step="0.01" placeholder="Сумма (₽)" />
-            <select v-model="catForm.fromWalletId" required>
-              <option disabled value="">Кошелек</option>
+        <div class="quick-expense-form">
+          <p class="quick-form-title">Быстрый расход</p>
+          <div class="quick-row">
+            <input type="number" v-model="catForm.amount" min="0.01" step="0.01" placeholder="Сумма ₽" />
+            <select v-model="catForm.fromWalletId">
+              <option disabled value="">Кошелёк</option>
               <option v-for="w in activeWallets" :key="w.id" :value="w.id">{{ w.name }}</option>
             </select>
           </div>
-          <div class="form-row-grid single-row">
-            <input type="text" v-model="catForm.note" placeholder="Комментарий к расходу..." />
-            <button type="submit" class="mini-submit-btn">ОК</button>
+          <div class="quick-row">
+            <input type="text" v-model="catForm.note" placeholder="Комментарий..." style="flex:1" />
+            <button class="ok-btn" @click="submitCategoryExpense">ОК</button>
           </div>
-        </form>
+        </div>
 
-        <div class="category-history-block">
-          <h4 class="sub-block-title">История по категории</h4>
-          <div class="category-history-list">
-            <div 
-              v-for="t in categoryTransactions" 
-              :key="t.id" 
-              class="cat-history-item"
-            >
-              <div class="cat-hist-left">
-                <span class="cat-hist-date">{{ formatDateShort(t.date) }}</span>
-                <span class="cat-hist-note">{{ t.note || 'Без пометки' }}</span>
+        <div class="cat-history">
+          <p class="quick-form-title">История</p>
+          <div class="cat-history-list">
+            <div v-for="t in categoryTransactions" :key="t.id" class="cat-hist-row">
+              <div>
+                <p class="cat-hist-note">{{ t.note || 'Без пометки' }}</p>
+                <p class="cat-hist-date">{{ formatDateShort(t.date) }}</p>
               </div>
               <span class="cat-hist-amount">-{{ formatCurrency(t.amount) }}</span>
             </div>
-            <div v-if="categoryTransactions.length === 0" class="cat-empty-history">
-              Операций по этой категории пока не было
+            <div v-if="categoryTransactions.length === 0" class="cat-empty">
+              Нет операций
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Модальное окно добавления категории -->
+    <!-- ── Add Category Modal ── -->
     <div v-if="isAddCategoryModalOpen" class="modal-overlay" @click.self="closeAddCategoryModal">
-      <div class="modal-content max-height-modal">
+      <div class="modal-content">
         <div class="modal-header">
           <h3>Новая категория</h3>
           <button class="close-btn" @click="closeAddCategoryModal">✕</button>
         </div>
-
         <form @submit.prevent="submitAddCategory" class="transaction-form">
           <div class="form-group">
             <label>Название</label>
@@ -201,30 +216,23 @@
           </div>
           <div class="form-group">
             <label>Иконка</label>
-            <div class="icon-selector-grid">
+            <div class="icon-grid">
               <div
                 v-for="icon in availableIcons"
                 :key="icon"
-                class="icon-option"
+                class="icon-opt"
                 :class="{ selected: newCategoryForm.iconName === icon }"
                 @click="newCategoryForm.iconName = icon"
               >
-                <AppIcon :name="icon" :size="20" />
+                <AppIcon :name="icon" :size="18" />
               </div>
             </div>
           </div>
           <div class="form-group">
-            <label>Лимит на месяц (₽) (необязательно)</label>
-            <input
-              type="number"
-              v-model="newCategoryForm.monthlyLimit"
-              min="0"
-              step="any"
-              placeholder="Оставьте пустым, если без лимита"
-            />
-            <small class="hint">Лимит можно превысить, но будет отображаться предупреждение</small>
+            <label>Лимит в месяц ₽ (необязательно)</label>
+            <input type="number" v-model="newCategoryForm.monthlyLimit" min="0" step="any" placeholder="Без лимита" />
           </div>
-          <button type="submit" class="submit-btn">Создать категорию</button>
+          <button type="submit" class="submit-btn">Создать</button>
         </form>
       </div>
     </div>
@@ -240,720 +248,412 @@ import type { Category } from '@/domain/types'
 
 const store = useFinanceStore()
 
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('ru-RU', {
-    style: 'currency',
-    currency: 'RUB',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(value)
+const fmt = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 2 })
+const formatCurrency = (v: number) => fmt.format(v)
+const formatShort = (v: number) => {
+  if (v === 0) return '0 ₽'
+  if (v >= 1000) return (v / 1000).toFixed(0) + 'к ₽'
+  return v + ' ₽'
 }
+const formatDateShort = (d: string) => new Date(d).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
 
-const formatDateShort = (dateStr: string) => {
-  const date = new Date(dateStr)
-  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
-}
-
-const activeWallets = computed(() => store.wallets.filter(w => !w.isArchived))
+const activeWallets     = computed(() => store.wallets.filter(w => !w.isArchived))
 const expenseCategories = computed(() => store.categories.filter(c => c.type === 'expense'))
 
-// --- Общая модалка ---
-const isModalOpen = ref(false)
-const modalType = ref<'income' | 'expense' | 'transfer'>('expense')
-const form = reactive({
-  amount: '',
-  date: new Date().toISOString().slice(0, 10),
-  fromWalletId: '',
-  toWalletId: '',
-  categoryId: '',
-  note: ''
-})
+const totalIncome  = computed(() => store.transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0))
+const totalExpense = computed(() => store.transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0))
 
-const modalTitle = computed(() => {
-  if (modalType.value === 'expense') return 'Новый расход'
-  if (modalType.value === 'income') return 'Новый доход'
-  return 'Перевод между кошельками'
-})
+const getCategorySpentThisMonth = (id: string) => {
+  const now = new Date()
+  return store.transactions
+    .filter(t => t.type === 'expense' && t.categoryId === id)
+    .filter(t => { const d = new Date(t.date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() })
+    .reduce((s, t) => s + t.amount, 0)
+}
 
+// ── Transaction modal ──
+const isModalOpen  = ref(false)
+const modalType    = ref<'income' | 'expense' | 'transfer'>('expense')
+const form = reactive({ amount: '', date: new Date().toISOString().slice(0, 10), fromWalletId: '', toWalletId: '', categoryId: '', note: '' })
+
+const modalTitle = computed(() => ({ expense: 'Новый расход', income: 'Новый доход', transfer: 'Перевод' }[modalType.value]))
 const availableCategories = computed(() => store.categories.filter(c => c.type === modalType.value))
 
-const openModal = (type: 'income' | 'expense' | 'transfer') => {
+const openModal = (type: typeof modalType.value) => {
   modalType.value = type
-  form.amount = ''
-  form.fromWalletId = activeWallets.value.length === 1 ? activeWallets.value[0].id : ''
-  form.toWalletId = activeWallets.value.length === 1 && type === 'income' ? activeWallets.value[0].id : ''
-  form.categoryId = ''
-  form.note = ''
+  Object.assign(form, { amount: '', fromWalletId: activeWallets.value.length === 1 ? activeWallets.value[0].id : '', toWalletId: '', categoryId: '', note: '' })
   isModalOpen.value = true
   store.openModal()
 }
-
-const closeModal = () => {
-  isModalOpen.value = false
-  store.closeModal()
-}
-
+const closeModal = () => { isModalOpen.value = false; store.closeModal() }
 const submitTransaction = () => {
-  const amountNum = parseFloat(form.amount)
-  if (isNaN(amountNum) || amountNum < 0.01) return
-  
-  const roundedAmount = Math.round(amountNum * 100) / 100
-  
-  store.addTransaction({
-    type: modalType.value,
-    amount: roundedAmount,
-    date: form.date,
-    note: form.note,
-    fromWalletId: modalType.value === 'income' ? '' : form.fromWalletId,
-    toWalletId: modalType.value === 'expense' ? '' : form.toWalletId,
-    categoryId: modalType.value === 'transfer' ? null : form.categoryId
-  })
+  const amount = Math.round(parseFloat(form.amount) * 100) / 100
+  if (isNaN(amount) || amount < 0.01) return
+  store.addTransaction({ type: modalType.value, amount, date: form.date, note: form.note, fromWalletId: modalType.value === 'income' ? '' : form.fromWalletId, toWalletId: modalType.value === 'expense' ? '' : form.toWalletId, categoryId: modalType.value === 'transfer' ? null : form.categoryId })
   closeModal()
 }
 
-// --- Модалка категории ---
+// ── Category modal ──
 const isCategoryModalOpen = ref(false)
-const selectedCategory = ref<Category | null>(null)
-const catForm = reactive({
-  amount: '',
-  fromWalletId: '',
-  note: ''
-})
+const selectedCategory    = ref<Category | null>(null)
+const catForm = reactive({ amount: '', fromWalletId: '', note: '' })
 
 const categoryTransactions = computed(() => {
   if (!selectedCategory.value) return []
-  return store.transactions
-    .filter(t => t.type === 'expense' && t.categoryId === selectedCategory.value?.id)
+  return store.transactions.filter(t => t.type === 'expense' && t.categoryId === selectedCategory.value?.id)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 })
 
-const openCategoryDetail = (category: Category) => {
-  selectedCategory.value = category
-  catForm.amount = ''
-  catForm.note = ''
-  catForm.fromWalletId = activeWallets.value.length === 1 ? activeWallets.value[0].id : ''
+const openCategoryDetail = (cat: Category) => {
+  selectedCategory.value = cat
+  Object.assign(catForm, { amount: '', note: '', fromWalletId: activeWallets.value.length === 1 ? activeWallets.value[0].id : '' })
   isCategoryModalOpen.value = true
   store.openModal()
 }
-
-const closeCategoryModal = () => {
-  isCategoryModalOpen.value = false
-  selectedCategory.value = null
-  store.closeModal()
-}
-
+const closeCategoryModal = () => { isCategoryModalOpen.value = false; selectedCategory.value = null; store.closeModal() }
 const submitCategoryExpense = () => {
-  const amountNum = parseFloat(catForm.amount)
-  if (isNaN(amountNum) || amountNum < 0.01 || !selectedCategory.value) return
-
-  const roundedAmount = Math.round(amountNum * 100) / 100
-
-  store.addTransaction({
-    type: 'expense',
-    amount: roundedAmount,
-    date: new Date().toISOString().slice(0, 10),
-    note: catForm.note,
-    fromWalletId: catForm.fromWalletId,
-    toWalletId: '',
-    categoryId: selectedCategory.value.id
-  })
-
-  catForm.amount = ''
-  catForm.note = ''
+  const amount = Math.round(parseFloat(catForm.amount) * 100) / 100
+  if (isNaN(amount) || amount < 0.01 || !selectedCategory.value) return
+  store.addTransaction({ type: 'expense', amount, date: new Date().toISOString().slice(0, 10), note: catForm.note, fromWalletId: catForm.fromWalletId, toWalletId: '', categoryId: selectedCategory.value.id })
+  catForm.amount = ''; catForm.note = ''
 }
 
-// --- Модалка добавления категории ---
+// ── Add Category modal ──
 const isAddCategoryModalOpen = ref(false)
-const newCategoryForm = reactive({
-  name: '',
-  iconName: 'cart',
-  monthlyLimit: null as number | null,
-  type: 'expense' as 'income' | 'expense'
-})
+const newCategoryForm = reactive({ name: '', iconName: 'cart', monthlyLimit: null as number | null, type: 'expense' as 'income' | 'expense' })
+const availableIcons = ['cart', 'bus', 'coffee', 'home', 'smile', 'salary', 'arrow-down', 'wallet', 'analytics', 'history', 'plus', 'food', 'shopping', 'health', 'education', 'travel', 'gift', 'subscription', 'utilities', 'clothing']
 
-// Список доступных иконок для выбора
-const availableIcons = [
-  'cart', 'bus', 'coffee', 'home', 'smile', 'salary', 'arrow-down', 'wallet', 'analytics', 'history',
-  'plus', 'food', 'shopping', 'health', 'education', 'travel', 'gift', 'subscription', 'utilities', 'clothing'
-]
-
-// Вычисление потраченной суммы по категории за текущий месяц
-const getCategorySpentThisMonth = (categoryId: string) => {
-  const now = new Date()
-  const currentMonth = now.getMonth()
-  const currentYear = now.getFullYear()
-  
-  return store.transactions
-    .filter(t => t.type === 'expense' && t.categoryId === categoryId)
-    .filter(t => {
-      const date = new Date(t.date)
-      return date.getMonth() === currentMonth && date.getFullYear() === currentYear
-    })
-    .reduce((sum, t) => sum + t.amount, 0)
-}
-
-const openAddCategoryModal = () => {
-  newCategoryForm.name = ''
-  newCategoryForm.iconName = 'cart'
-  newCategoryForm.monthlyLimit = null
-  newCategoryForm.type = 'expense'
-  isAddCategoryModalOpen.value = true
-  store.openModal()
-}
-
-const closeAddCategoryModal = () => {
-  isAddCategoryModalOpen.value = false
-  store.closeModal()
-}
-
+const openAddCategoryModal  = () => { Object.assign(newCategoryForm, { name: '', iconName: 'cart', monthlyLimit: null, type: 'expense' }); isAddCategoryModalOpen.value = true; store.openModal() }
+const closeAddCategoryModal = () => { isAddCategoryModalOpen.value = false; store.closeModal() }
 const submitAddCategory = () => {
   if (!newCategoryForm.name.trim()) return
-
-  store.addCategory({
-    type: newCategoryForm.type,
-    name: newCategoryForm.name.trim(),
-    iconName: newCategoryForm.iconName,
-    monthlyLimit: newCategoryForm.monthlyLimit
-  })
-
+  store.addCategory({ type: newCategoryForm.type, name: newCategoryForm.name.trim(), iconName: newCategoryForm.iconName, monthlyLimit: newCategoryForm.monthlyLimit })
   closeAddCategoryModal()
 }
 </script>
 
 <style scoped>
-.dashboard-view {
-  padding: 16px;
-  padding-bottom: 80px;
-  box-sizing: border-box;
+.dashboard {
+  padding: 16px 16px calc(var(--tab-h) + 16px);
 }
 
-/* Баланс */
+/* ── Balance Card ── */
 .balance-card {
-  text-align: center;
-  padding: 28px 20px;
-  background: var(--bg-glass);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-radius: 24px;
-  border: 1px solid var(--glass-border);
-  margin-bottom: 24px;
-  box-shadow: 0 12px 40px var(--shadow-color);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.balance-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 16px 48px var(--shadow-color);
+  background: linear-gradient(145deg, #111128 0%, #0f0f1e 100%);
+  border: 1px solid rgba(93,138,255,0.18);
+  border-radius: var(--radius-xl);
+  padding: 24px 22px 20px;
+  margin-bottom: 14px;
+  animation: fadeInUp .4s ease both;
 }
 
 .balance-label {
-  color: var(--text-secondary);
-  font-size: 13px;
-  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-3);
   text-transform: uppercase;
   letter-spacing: 1px;
-  font-weight: 600;
+  margin-bottom: 8px;
 }
 
 .balance-amount {
-  font-size: 42px;
+  font-size: 38px;
   font-weight: 800;
-  color: #ffffff;
-  background: linear-gradient(135deg, #ffffff, #a0a0ff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  letter-spacing: -1.5px;
+  color: #fff;
+  margin-bottom: 18px;
+  line-height: 1;
 }
 
-/* Быстрые действия */
-.action-buttons {
+.balance-stats {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(255,255,255,0.04);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+}
+
+.bal-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.bal-stat-label {
+  font-size: 11px;
+  color: var(--text-3);
+  font-weight: 600;
+}
+
+.bal-stat-value {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.bal-stat-value.income  { color: var(--green); }
+.bal-stat-value.expense { color: var(--red); }
+
+.bal-divider {
+  width: 1px;
+  height: 32px;
+  background: var(--border);
+  margin: 0 16px;
+}
+
+/* ── Actions ── */
+.actions {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 28px;
+  gap: 10px;
+  margin-bottom: 26px;
+  animation: fadeInUp .4s .08s ease both;
 }
 
-.action-buttons button {
+.act-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 8px;
-  padding: 16px 8px;
-  font-size: 13px;
-  font-weight: 600;
-  border-radius: 18px;
-  background: var(--bg-glass);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid var(--glass-border);
-  color: var(--text-primary);
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.action-buttons button:hover {
-  transform: translateY(-4px);
-  border-color: var(--accent-blue);
-  box-shadow: 0 8px 24px rgba(93, 138, 255, 0.2);
-}
-
-.action-buttons button.btn-expense {
-  color: var(--accent-red);
-  border-color: rgba(255, 69, 58, 0.3);
-}
-.action-buttons button.btn-expense:hover {
-  border-color: var(--accent-red);
-  box-shadow: 0 8px 24px rgba(255, 69, 58, 0.2);
-}
-
-.action-buttons button.btn-income {
-  color: var(--accent-green);
-  border-color: rgba(48, 209, 88, 0.3);
-}
-.action-buttons button.btn-income:hover {
-  border-color: var(--accent-green);
-  box-shadow: 0 8px 24px rgba(48, 209, 88, 0.2);
-}
-
-.action-buttons button.btn-transfer {
-  color: var(--accent-yellow);
-  border-color: rgba(255, 193, 7, 0.3);
-}
-.action-buttons button.btn-transfer:hover {
-  border-color: var(--accent-yellow);
-  box-shadow: 0 8px 24px rgba(255, 193, 7, 0.2);
-}
-
-/* КАТЕГОРИИ: Жесткий фикс отображения */
-.categories-section {
-  margin-bottom: 28px;
-  display: block;
-}
-
-.section-title {
-  font-size: 20px;
+  padding: 16px 8px 14px;
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  font-size: 12px;
   font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 16px;
-  padding-left: 4px;
+  color: var(--text-2);
+  transition: border-color .2s, transform .15s;
+}
+.act-btn:active { transform: scale(0.96); }
+
+.act-ico {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.categories-grid {
-  display: grid !important;
-  grid-template-columns: repeat(4, 1fr) !important; /* Строго 4 колонки */
-  gap: 20px 12px !important;
-  background: var(--bg-glass) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-  border: 1px solid var(--glass-border) !important;
-  padding: 24px 16px !important;
-  border-radius: 24px !important;
-  list-style: none !important;
-  list-style-type: none !important;
-  box-shadow: 0 12px 40px var(--shadow-color);
+.act-expense { border-color: rgba(255,69,58,0.2); }
+.act-expense .act-ico { background: var(--red-dim); color: var(--red); }
+.act-expense span { color: var(--red); }
+
+.act-income { border-color: rgba(52,199,89,0.2); }
+.act-income .act-ico { background: var(--green-dim); color: var(--green); }
+.act-income span { color: var(--green); }
+
+.act-transfer { border-color: rgba(255,214,10,0.15); }
+.act-transfer .act-ico { background: var(--yellow-dim); color: var(--yellow); }
+.act-transfer span { color: var(--yellow); }
+
+/* ── Section ── */
+.section { margin-bottom: 24px; animation: fadeInUp .4s .14s ease both; }
+
+/* ── Categories Grid ── */
+.cats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 14px;
 }
 
-.category-grid-item {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  text-align: center !important;
+.cat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
   cursor: pointer;
-  list-style: none !important;
-  list-style-type: none !important;
-  transition: transform 0.3s ease;
+  transition: transform .2s;
+}
+.cat-item:active { transform: scale(0.93); }
+
+.cat-ico-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .2s, border-color .2s;
+}
+.cat-item:hover .cat-ico-wrap {
+  background: var(--blue-dim);
+  border-color: rgba(93,138,255,0.3);
 }
 
-.category-grid-item:hover {
-  transform: translateY(-6px);
+.cat-ico-dashed {
+  border-style: dashed;
+  color: var(--text-3);
+  background: transparent;
 }
 
-/* Иконка в идеальном круге */
-.category-icon-wrapper {
-  width: 60px !important;
-  height: 60px !important;
-  border-radius: 50% !important;
-  background: var(--bg-glass) !important;
-  border: 2px solid var(--glass-border) !important;
-  color: var(--accent-blue) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  margin-bottom: 12px !important;
-  transition: all 0.3s ease;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+.small-ico {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
 }
 
-.category-grid-item:hover .category-icon-wrapper {
-  border-color: var(--accent-blue);
-  background: rgba(93, 138, 255, 0.1) !important;
-  transform: scale(1.05);
-  box-shadow: 0 12px 28px rgba(93, 138, 255, 0.3);
+.cat-name {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-1);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
 }
 
-.category-grid-name {
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  color: var(--text-primary) !important;
-  width: 100% !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  display: block !important;
+.cat-progress {
+  width: 100%;
+  height: 3px;
+  background: var(--bg-elevated);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.cat-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--blue);
+  transition: width .4s;
+}
+.cat-progress-fill.over { background: var(--red); }
+
+.cat-spent {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-3);
 }
 
-/* Кошельки */
+/* ── Wallets ── */
 .wallets-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.wallet-item {
+.wallet-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 14px 16px;
-  background-color: #1c1c1e;
-  border-radius: 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: border-color .2s;
 }
+.wallet-row:hover { border-color: var(--border-hover); }
 
-.wallet-info {
+.wallet-left {
   display: flex;
   align-items: center;
+  gap: 12px;
+}
+
+.wallet-ico {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--blue-dim);
+  color: var(--blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wallet-name { font-size: 15px; font-weight: 600; color: var(--text-1); }
+.wallet-bal  { font-size: 16px; font-weight: 700; color: var(--text-1); }
+
+/* ── Quick Expense Form ── */
+.quick-expense-form {
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
 }
 
-.wallet-icon { color: var(--accent-blue); }
-.wallet-name { font-size: 15px; color: #ffffff; }
-.wallet-balance { font-size: 15px; font-weight: 600; color: #ffffff; }
+.quick-form-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
 
-/* Модалки (Fullscreen) */
-.modal-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
+.quick-row {
   display: flex;
-  align-items: flex-end;  /* ← было center, теперь sheet снизу */
-  justify-content: center;
-  z-index: 2000;
-  animation: fadeIn 0.25s ease;
+  gap: 8px;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.ok-btn {
+  width: 52px;
+  height: 50px;
+  border-radius: var(--radius-sm);
+  background: var(--blue);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
 }
 
-.modal-content {
-  background-color: #1c1c1e;
-  width: 100%;
-  max-width: 430px;
-  border-radius: 20px 20px 0 0;   /* ← только верхние углы */
-  padding: 12px 24px 24px;
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
-  box-sizing: border-box;
-  max-height: 85vh;                /* ← не 90, оставь видимым оверлей */
+/* ── Category History ── */
+.cat-history { display: flex; flex-direction: column; gap: 10px; }
+
+.cat-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
   overflow-y: auto;
   scrollbar-width: none;
-  -ms-overflow-style: none;
-  animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1); /* ← spring-like */
 }
+.cat-history-list::-webkit-scrollbar { display: none; }
 
-.modal-content::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-}
-
-/* Убедимся, что форма внутри может скроллиться */
-.modal-content .transaction-form {
-  flex: 1;
-  min-height: 0;
-}
-
-/* На мобильных устройствах модалка почти на всю ширину */
-@media (max-width: 600px) {
-  .modal-content {
-    max-width: 100%;
-    border-radius: 20px 20px 0 0;
-    max-height: 95vh;
-  }
-}
-
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
-}
-
-.modal-content::before {
-  content: '';
-  display: block;
-  width: 36px;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 2px;
-  margin: 0 auto 16px;
-}
-
-.max-height-modal {
-  max-height: 95vh;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
-}
-
-.max-height-modal::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-}
-
-/* Убедимся, что внутренний контент может растягиваться */
-.max-height-modal .category-history-block {
-  flex: 1;
-  min-height: 0; /* Важно для скролла внутри flex-контейнера */
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.modal-title-with-icon {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.small-circle {
-  width: 32px !important;
-  height: 32px !important;
-  margin-bottom: 0 !important;
-  background-color: #2c2c2e !important;
-}
-
-.close-btn {
-  background: #2c2c2e;
-  color: #8e8e93;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  border: none;
-}
-
-/* Формы */
-.transaction-form { display: flex; flex-direction: column; gap: 12px; }
-.form-group { display: flex; flex-direction: column; gap: 4px; }
-.form-group label { font-size: 12px; color: #8e8e93; padding-left: 2px; }
-.submit-btn {
-  margin-top: 8px;
-  background-color: var(--accent-blue);
-  color: white;
-  height: 46px;
-  border-radius: 12px;
-  font-weight: 600;
-  border: none;
-  align-self: center;
-  max-width: 200px;
-  width: auto;
-  padding-left: 24px;
-  padding-right: 24px;
-}
-
-.category-quick-form {
-  background-color: #2c2c2e;
-  padding: 12px;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.sub-block-title {
-  font-size: 12px;
-  text-transform: uppercase;
-  color: #8e8e93;
-  letter-spacing: 0.5px;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.form-row-grid {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 8px;
-}
-
-.single-row { grid-template-columns: 1fr auto; }
-.mini-submit-btn {
-  width: 54px;
-  height: 49px;
-  border-radius: 8px;
-  background-color: var(--accent-blue);
-  color: white;
-  border: none;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
-}
-.mini-submit-btn:active {
-  background-color: #4a7aff;
-  transform: scale(0.98);
-}
-
-.category-history-block {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.category-history-list {
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.cat-history-item {
+.cat-hist-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 10px 12px;
-  background-color: #2c2c2e;
-  border-radius: 10px;
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
 }
+.cat-hist-note  { font-size: 14px; font-weight: 500; color: var(--text-1); }
+.cat-hist-date  { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+.cat-hist-amount { font-size: 14px; font-weight: 700; color: var(--red); }
+.cat-empty { text-align: center; color: var(--text-3); font-size: 13px; padding: 16px 0; }
 
-.cat-hist-left { display: flex; flex-direction: column; }
-.cat-hist-date { font-size: 11px; color: #8e8e93; }
-.cat-hist-note { font-size: 14px; color: #ffffff; }
-.cat-hist-amount { font-size: 14px; font-weight: 600; color: var(--accent-red); }
-.cat-empty-history { color: #8e8e93; text-align: center; font-size: 13px; padding: 16px 0; }
-
-/* Стили для кнопки добавления категории */
-.add-category .category-icon-wrapper {
-  background-color: #2c2c2e !important;
-  color: #8e8e93 !important;
-  border: 1px dashed #8e8e93;
-}
-
-.add-category:active .category-icon-wrapper {
-  background-color: #3a3a3c !important;
-}
-
-/* Информация о лимите категории */
-.category-limit-info {
-  margin-top: 4px;
-  font-size: 9px;
-  color: #8e8e93;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  flex-wrap: wrap;
-}
-
-.limit-spent {
-  font-weight: 600;
-  color: #ffffff;
-}
-
-.limit-separator {
-  color: #8e8e93;
-}
-
-.limit-total {
-  color: #8e8e93;
-}
-
-.limit-no-limit {
-  font-size: 8px;
-  color: #8e8e93;
-  margin-left: 4px;
-}
-
-.limit-bar {
-  width: 100%;
-  height: 3px;
-  background-color: #2c2c2e;
-  border-radius: 2px;
-  margin-top: 2px;
-  overflow: hidden;
-}
-
-.limit-bar.exceeded {
-  background-color: rgba(255, 59, 48, 0.2);
-}
-
-.limit-bar-fill {
-  height: 100%;
-  background-color: var(--accent-blue);
-  border-radius: 2px;
-  transition: width 0.3s;
-}
-
-.limit-bar.exceeded .limit-bar-fill {
-  background-color: var(--accent-red);
-}
-
-/* Детали лимита категории (новая структура) */
-.category-limit-details {
-  margin-top: 8px;
-  width: 100%;
-}
-
-.limit-numbers {
-  display: flex;
-  justify-content: center;
-  gap: 4px;
-  font-size: 10px;
-  margin-bottom: 4px;
-}
-
-/* Сетка выбора иконок */
-.icon-selector-grid {
+/* ── Icon Grid ── */
+.icon-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 6px;
 }
-
-.icon-option {
-  width: 40px;
+.icon-opt {
   height: 40px;
-  border-radius: 8px;
-  background-color: #2c2c2e;
+  border-radius: 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.1s, transform 0.1s;
+  color: var(--text-2);
+  transition: background .15s, border-color .15s;
 }
+.icon-opt:hover   { background: var(--bg-elevated); }
+.icon-opt.selected { background: var(--blue); color: #fff; border-color: var(--blue); }
 
-.icon-option:hover {
-  background-color: #3a3a3c;
-}
-
-.icon-option.selected {
-  background-color: var(--accent-blue);
-  color: white;
-}
-
-/* Подсказка */
-.hint {
-  font-size: 10px;
-  color: #8e8e93;
-  margin-top: 2px;
-}
+.max-height-modal { max-height: 92vh; }
 </style>
