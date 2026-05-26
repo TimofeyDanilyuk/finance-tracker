@@ -125,19 +125,16 @@ const isAnyModalOpen = computed(() => store.isAnyModalOpen)
   flex: 1;
   overflow: hidden; /* Контент скроллится строго внутри страниц */
   position: relative;
-  padding-bottom: calc(30px + env(safe-area-inset-bottom, 0px));
 }
 
 .app-tabbar {
   display: flex;
   justify-content: space-around;
-  align-items: center;
-  height: 50px;
-  /* Учитываем нижний Safe Area для индикатора Home на iPhone */
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  align-items: flex-start; /* ← было center */
+  padding-top: 8px;
+  padding-bottom: env(safe-area-inset-bottom, 16px); /* ← safe area на содержимое, не на высоту */
   background-color: var(--bg-black);
   border-top: 1px solid var(--border-color);
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
   position: fixed;
   bottom: 0;
   left: 50%;
@@ -155,14 +152,13 @@ const isAnyModalOpen = computed(() => store.isAnyModalOpen)
   justify-content: center;
   background: none;
   border: none;
-  outline: none;
   box-shadow: none;
-  padding: 6px 0;
-  width: auto;
-  height: 100%;
+  padding: 0;
+  width: 60px;        /* ← фиксированная ширина вместо auto */
+  min-height: 44px;   /* ← минимальный hit target для iOS */
   color: var(--text-secondary);
-  font-weight: 500;
-  font-size: 11px;
+  font-size: 10px;    /* ← было 11px, но важнее — убрать font-weight 500 */
+  font-weight: 400;
   gap: 4px;
   transition: color 0.2s;
 }
@@ -173,5 +169,9 @@ const isAnyModalOpen = computed(() => store.isAnyModalOpen)
 
 .tab-item:active {
   opacity: 1; /* Перебиваем глобальный opacity для таббара */
+}
+
+body {
+  background-color: #0a0a0a; /* Убедись что это есть */
 }
 </style>

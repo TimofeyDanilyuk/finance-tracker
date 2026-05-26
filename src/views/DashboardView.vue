@@ -634,16 +634,12 @@ const submitAddCategory = () => {
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background-color: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  background-color: rgba(0, 0, 0, 0.6);
   display: flex;
-  align-items: center;
+  align-items: flex-end;  /* ← было center, теперь sheet снизу */
   justify-content: center;
   z-index: 2000;
-  animation: fadeIn 0.3s ease;
-  padding: 20px;
-  box-sizing: border-box;
+  animation: fadeIn 0.25s ease;
 }
 
 @keyframes fadeIn {
@@ -654,18 +650,16 @@ const submitAddCategory = () => {
 .modal-content {
   background-color: #1c1c1e;
   width: 100%;
-  max-width: 500px;
-  border-radius: 20px;
-  padding: 24px;
+  max-width: 430px;
+  border-radius: 20px 20px 0 0;   /* ← только верхние углы */
+  padding: 12px 24px 24px;
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
   box-sizing: border-box;
-  max-height: 90vh;
+  max-height: 85vh;                /* ← не 90, оставь видимым оверлей */
   overflow-y: auto;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
-  display: flex;
-  flex-direction: column;
-  animation: fadeIn 0.3s ease;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1); /* ← spring-like */
 }
 
 .modal-content::-webkit-scrollbar {
@@ -689,7 +683,17 @@ const submitAddCategory = () => {
 
 @keyframes slideUp {
   from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  to   { transform: translateY(0); }
+}
+
+.modal-content::before {
+  content: '';
+  display: block;
+  width: 36px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  margin: 0 auto 16px;
 }
 
 .max-height-modal {
