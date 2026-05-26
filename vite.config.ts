@@ -4,7 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 
 export default defineConfig({
-  //base: '/finance-tracker/', 
+  base: '/finance-tracker/', 
   plugins: [
     vue(),
     VitePWA({

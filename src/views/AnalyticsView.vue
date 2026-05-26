@@ -88,7 +88,6 @@
 import { ref, computed } from 'vue'
 import { useFinanceStore } from '@/store/financeStore'
 import AppIcon from '@/components/AppIcon.vue'
-import type { Transaction } from '@/domain/types'
 
 const store = useFinanceStore()
 const currentPeriod = ref<'month' | 'year'>('month')
