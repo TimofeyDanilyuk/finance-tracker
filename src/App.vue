@@ -67,31 +67,29 @@ const isAnyModalOpen = computed(() => store.isAnyModalOpen)
 </script>
 
 <style scoped>
+/* Враппер занимает весь экран и центрирует телефон */
 .app-wrapper {
-  background: var(--bg);
-  min-height: 100vh;
+  width: 100%;
+  height: 100%;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
+  background: var(--bg);
 }
 
 .app-container {
   width: 100%;
   max-width: 430px;
-  height: 100vh;
-  max-height: 932px;
+  height: 100%;
   background: var(--bg);
   display: flex;
-  flex-direction: column;  /* ключевое: header + main + tabbar в колонку */
+  flex-direction: column;
   overflow: hidden;
-}
-
-@media (max-width: 430px) {
-  .app-container { max-height: 100vh; }
 }
 
 /* ── Header ── */
 .app-header {
+  flex-shrink: 0;
   height: calc(56px + env(safe-area-inset-top, 0px));
   display: flex;
   align-items: flex-end;
@@ -99,7 +97,6 @@ const isAnyModalOpen = computed(() => store.isAnyModalOpen)
   justify-content: space-between;
   border-bottom: 1px solid var(--border);
   background: var(--bg);
-  flex-shrink: 0;
 }
 
 .header-title {
@@ -117,24 +114,24 @@ const isAnyModalOpen = computed(() => store.isAnyModalOpen)
   opacity: 0.7;
 }
 
-/* ── Main — занимает всё свободное пространство ── */
+/* ── Main: flex:1 + min-height:0 — обязательно оба ── */
 .app-main {
   flex: 1;
+  min-height: 0;
   overflow: hidden;
-  min-height: 0; /* важно для flex + overflow */
+  position: relative;
 }
 
-/* ── Tab Bar — прибит снизу как flex-child, не absolute ── */
+/* ── Tabbar: flex-shrink:0 — не сжимается, всегда виден ── */
 .app-tabbar {
   flex-shrink: 0;
   display: flex;
   justify-content: space-around;
   align-items: flex-start;
   padding-top: 10px;
-  padding-bottom: env(safe-area-inset-bottom, 16px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
   background: var(--bg-card);
   border-top: 1px solid var(--border);
-  /* НЕТ position: absolute — он часть flex-колонки */
 }
 
 .tab-item {
